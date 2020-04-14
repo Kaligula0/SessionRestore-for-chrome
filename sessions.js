@@ -9,11 +9,92 @@
 						sessions: "[]"
 					}
 				);
-			clog($result);
+		}
+	);
+
+	// check if there are already sessions in storage, if not then create default
+	// if yes then read
+	chrome.storage.local.get(
+		'interval',
+		function($result){
+			if (Object.keys($result).length==0) //$result={} instead of {sessions: […]}
+				$result="300"; // [SEC]; DEFAULT 5 MINS
+			$result=(typeof $result=='object'?$result['interval']:$result);
+			window.$interval = JSON.parse($result);
+			document.querySelector('#mainTable td.settings input[name="interval"]').value = JSON.parse($result);
+		}
+	);
+	chrome.storage.local.get(
+		'quotaOverload',
+		function($result){
+			if (Object.keys($result).length==0) //$result={} instead of {sessions: […]}
+				$result="false"; // DEFAULT NOT TO EXCEED 90%
+			$result=(typeof $result=='object'?$result['quotaOverload']:$result);
+			window.$quotaOverload = JSON.parse($result);
+			document.querySelector('#mainTable td.settings input[name="quotaOverload"]').checked = JSON.parse($result);
+		}
+	);
+	chrome.storage.local.get(
+		'quotaMax',
+		function($result){
+			if (Object.keys($result).length==0) //$result={} instead of {sessions: […]}
+				$result="20"; // DEFAULT 20%
+			$result=(typeof $result=='object'?$result['quotaMax']:$result);
+			window.$quotaMax = JSON.parse($result);
+			document.querySelector('#mainTable td.settings input[name="quotaMax"]').value = JSON.parse($result);
 		}
 	);
 
 	readStorage();
+
+	document.querySelectorAll('#mainTable td.settings input').forEach(
+		function($el, $i, $arr){
+			$el.addEventListener(
+				'input',
+				function () {
+					if (this.name=="quotaOverload") {
+						$quotaOverload = this.checked;
+						chrome.storage.local.set({quotaOverload: this.checked});
+						alert("Saved!");
+					} else if (this.name=="quotaMax") {
+						this.value = +this.value.replace(/[^\d]+/g,'');
+						if (this.value>90) {
+							if (!$quotaOverload) {
+								this.value = 90;
+							} else {
+								if (this.value>100)
+									this.value = 100;
+							}
+						}
+						chrome.storage.local.set({quotaMax: this.value});
+					} else if (this.name=="interval") {
+						this.value = +this.value.replace(/[^\d]+/g,'');
+						if (this.value<1) {
+							this.value = 1;
+						}
+						chrome.storage.local.set({interval: this.value});
+					}
+				}
+			);
+		}
+	);
+	document.querySelectorAll('#mainTable td.settings input').forEach(
+		function($el, $i, $arr){
+			$el.addEventListener(
+				'change',
+				function () {
+					if (this.name=="quotaMax") {
+						chrome.storage.local.set({quotaMax: this.value});
+						alert("Saved!");
+					} else if (this.name=="interval") {
+						chrome.storage.local.set({interval: this.value});
+						alert("Saved!");
+					}
+				}
+			);
+		}
+	);
+
 }
 
 var $sessions;
@@ -55,12 +136,13 @@ function buildSessionList(){
 
 			$mainList = ''
 				+ '<p class="date session_'+$i+'">'
-				+ '<a href="#" class="session_'+$i+'">'
+				+ '<a class="sessionLink session_'+$i+'">'
 				+ $date.toLocaleString() + '</a><br />'
 				+ '<small>'
 				+ $windows_l + ' window' + ($windows_l==1?'':'s')
 				+ ', ' + $tabsSum + ' tab' + ($tabsSum==1?'':'s')
 				+ '</small>'
+				+ '<small><a class="removeLink session_'+$i+'" title="Remove session">[X]</small>'
 				+ '</p>'
 				+ $mainList;
 
@@ -69,12 +151,23 @@ function buildSessionList(){
 	
 	document.querySelector('#mainTable tbody td.mainList').innerHTML = $mainList;
 
-	document.querySelectorAll('#mainTable td.mainList p.date a').forEach(
+	document.querySelectorAll('#mainTable td.mainList p.date a.sessionLink').forEach(
 		function($el, $i, $arr){
 			$el.addEventListener(
 				'click',
 				function () {
 					showSessionDetails(+this.className.match(/session_(\d+)/)[1]);
+				}
+			);
+		}
+	);
+
+	document.querySelectorAll('#mainTable td.mainList p.date a.removeLink').forEach(
+		function($el, $i, $arr){
+			$el.addEventListener(
+				'click',
+				function () {
+					removeSession(+this.className.match(/session_(\d+)/)[1]);
 				}
 			);
 		}
@@ -115,7 +208,7 @@ function showSessionDetails($id=$sessions.length-1){
 	$windows.forEach(function($el, $i, $arr){
 		$sessionDetails = $sessionDetails
 			+ '<h2 class="session_'+$id+'"> » Window #' + ($i+1) + ($el.incognito?' (Incognito) – ':' – ') + $el.tabs.length + ' tabs '
-			+ '<small>→ <a class="session_'+$id+' openall window_'+($i)+'" href="#" title="Open new window with all these tabs">[open all]</a></small></h2>'
+			+ '<small>→ <a class="session_'+$id+' openall window_'+($i)+'" title="Open new window with all these tabs">[open all]</a></small></h2>'
 			+ '<ul>';
 		
 		$el.tabs.forEach(function($tab, $j, $arr){
@@ -189,6 +282,17 @@ width: 1608
 	}
 clog($obj);
 	chrome.windows.create($obj);
+}
+
+function removeSession($id) {
+	clog($id);
+	$sessions.splice($id, 1);
+	chrome.storage.local.set(
+		{
+			sessions: JSON.stringify($sessions)
+		}
+	);
+	document.querySelector('#mainTable td.mainList p.session_'+$id).remove();
 }
 
 /*

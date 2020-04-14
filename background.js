@@ -1,6 +1,7 @@
 ﻿/*
 	TODO: add info @ translations
 			http://developer.chrome.com/extensions/i18n.html
+	TODO: (?) save SELDOM but also WHEN NEW TAB OPEN
 */
 /*
  * SessionRestore
@@ -14,6 +15,8 @@
 
 
 /*
+	MAY BE USEFUL
+
 	chrome.tabs.getSelected(null,function(tab){})
 	var g=tab.url.indexOf('facebook.com');
 	
@@ -21,7 +24,6 @@
 	chrome.browserAction.setTitle({title:'Last saved: ('+(new Date()).toLocaleTimeString()+')'});
 	chrome.browserAction.setBadgeText({text:''+counter});
 	chrome.browserAction.setBadgeBackgroundColor({color:[208,0,24,255]}); // GMail red // it was green rgb(0,204,51) before
-	chrome.browserAction.setIcon({path:'images/icon-offline.png'});
 */
 
 
@@ -30,9 +32,27 @@
  */
 function start(){
 
-	// read user settings
-//window.$Interval = (+localStorage['TimerDelay']||300000); // 5 mins
-	var $Interval = 300000; // 5 mins
+	// read REQUIRED user settings
+	// I mean, check if there are already sessions in storage, if not then create default
+	// if yes then read
+	chrome.storage.local.get(
+		'interval',
+		function($result){
+			if (Object.keys($result).length==0) //$result={} instead of {sessions: […]}
+				$result="300"; // [SEC]; DEFAULT 5 MINS
+			$result=(typeof $result=='object'?$result['interval']:$result);
+			window.$interval = JSON.parse($result);
+		}
+	);
+	chrome.storage.local.get(
+		'quotaMax',
+		function($result){
+			if (Object.keys($result).length==0) //$result={} instead of {sessions: […]}
+				$result="20"; // DEFAULT 20%
+			$result=(typeof $result=='object'?$result['quotaMax']:$result);
+			window.$quotaMax = JSON.parse($result);
+		}
+	);
 
 	// read or set 'saveAlarm'
 	chrome.alarms.get(
@@ -41,15 +61,15 @@ function start(){
 			clog('I\'m trying to find out if \'saveAlarm\' is already set:');
 			if (typeof $a=='object') {
 				clog('→ true!');
-				chrome.alarms.create('saveAlarm', {periodInMinutes:$Interval/60000});
+				chrome.alarms.create('saveAlarm', {periodInMinutes:$interval/60});
 			} else {
 				clog('→ false. I\'m going to set it now.');
-				// chrome.alarms.create('saveAlarm', {delayInMinutes:$Interval/60000,periodInMinutes:$Interval/60000});
+				// chrome.alarms.create('saveAlarm', {delayInMinutes:$interval/60,periodInMinutes:$interval/60});
 				chrome.alarms.create(
 					'saveAlarm',
 					{
 						when:Date.now()+5000,
-						periodInMinutes:$Interval/60000
+						periodInMinutes:$interval/60
 					}
 				);
 				clog('Alarm set.');
@@ -103,41 +123,33 @@ function save(){
 	chrome.windows.getAll(
 		{populate:true},
 		function($windows){
-		clog('$windows');
-		clog($windows);
-			//var $sessions=[]
-			//var $sessions=JSON.parse(localStorage['sessions']);
 			chrome.storage.local.get(
 				'sessions',
 				function($result){
-					var $data,$date,$sessions;
+					var $data,$date,$sessions,$obj,$string;
+					chrome.storage.local.getBytesInUse(function($a){window.$bytesInUse=$a});
 					
 					$data=$windows;
 					$date=new Date();
 					$date=Number($date);
-					clog('date: '+new Date($date));
 					
 					$result=(typeof $result=='object'?$result['sessions']:$result);
 					$sessions=JSON.parse($result);
-					clog('$sessions (get):');
-					clog($sessions);
 
-					if ($sessions.length>=30) $sessions.shift();
-					
-					$sessions.push(
-						{
-							date : $date,
-							windows : $data
-						}
-					);
-					clog('$sessions (push):');
-					clog($sessions);
+					$obj = {
+						date : $date,
+						windows : $data
+					}
+					$sessions.push( $obj );
 
-					//localStorage['sessions']=JSON.stringify($sessions);
+					while (JSON.stringify($sessions).length + JSON.stringify($obj).length > $quotaMax/100 * chrome.storage.local.QUOTA_BYTES) {
+						$sessions.shift();
+					}
+					//OR: if ($sessions.length>=30) $sessions.shift();
+
 					chrome.storage.local.set(
 						{
 							sessions: JSON.stringify($sessions)
-//CHECK THE SIZE OF DATA
 						}
 					);
 
@@ -146,8 +158,6 @@ function save(){
 
 				}
 			);
-			
-			//remove var $sessions
 		}
 	);
 }
@@ -174,8 +184,6 @@ chrome.browserAction.onClicked.addListener(function($tab){
 		}
 	);
 });
-
-//save RZADZIEJ ale też przy OTWARCIU NOWEJ ZAKŁADKI
 
 /*
  *  console.log() with time on line beginning

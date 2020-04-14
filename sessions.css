@@ -6,13 +6,36 @@ small {
 	font-size: small;
 }
 
+a {
+	cursor: pointer;
+	text-decoration: underline;
+	color: #0000ee;
+}
+
 table, th, td {
 	border: solid 1px black;
 	vertical-align: top;
 }
 
+table .mainList, .settings {
+	width: 200px;
+}
+
 td.mainList p.active {
 	font-weight: bold;
+}
+
+td.mainList p.date {
+	position: relative;
+}
+td.mainList p.date a.removeLink {
+	position: absolute;
+	top: 0;
+	right: 0;
+	display: none;
+}
+td.mainList p.date:hover a.removeLink {
+	display: block;
 }
 
 td.details li {

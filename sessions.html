@@ -7,14 +7,22 @@
 		<table id="mainTable" style="width: 100%">
 			<thead>
 				<tr>
-					<th class="mainList" style="width: 200px;"><span class="number"></span> saved sessions</td>
-					<th class="details">Session details</td>
+					<th class="mainList"><span class="number"></span> saved sessions</th>
+					<th class="details">Session details</th>
+					<th class="settings">Settings</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr>
 					<td class="mainList"> </td>
 					<td class="details"> </td>
+					<td class="settings">
+						<h4>Auto-save every</h4>
+						<p><input name="interval" type="text" size="1"> seconds <button type="button" value="OK">OK</button></p>
+						<h4>How much memory to use?</h4>
+						<p>We have 5 MB for all saved sessions and these settings. More space used means more saved sessions but more memory used. (Remember it is regularly read and saved over and over again.) I recommend not to choose more than 90% (if you choose more I will save max. 90%). If you want to use more please select this checkbox <input name="quotaOverload" type="checkbox">, but it may cause all data to be trimmed and not readable.<br />
+						I want to use <input name="quotaMax" type="text" size="1">% <button type="button" value="OK">OK</button></p>
+					</td>
 				</tr>
 			</tbody>
 		</table>

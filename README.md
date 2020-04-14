@@ -17,9 +17,10 @@ I know Chrome can restore tabs. But didn't it happen to you that once Chrome cou
 # 4) Why for free? Where is the catch?
 I'm not a software developer. I'm a hobby coder. I made it for me and my wife. Why not publish it?
 # 5) Details
-• Auto-saving every 5 minutes by default. (Maybe this will become a user setting if you need.)
+• Auto-saving every 5 minutes by default. (You can change it.)
 • You can restore any singular tab, many tabs or whole window, even multiple windows – everything that was open.
-• We have 5 MB to use for this purpose ;) As it saves every 5 minutes I decided to use 20% (maybe this will become a user setting if you need), and for me this makes about 30 of last saved sessions with 25-30 tabs each.
+• We have 5 MB to use for this purpose ;) As it saves every 5 minutes I decided to use 20% (you can change it), and for me this makes about 30 of last saved sessions with 25-30 tabs each.
 • If you want you can permit it in Incognito mode – it can also restore Incognito window as Incognito again.
+• You can remove specific sessions.
 # 6) There's something to improve?
 Let me know. Submit an issue.
