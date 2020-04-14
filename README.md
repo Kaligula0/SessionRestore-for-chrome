@@ -4,7 +4,8 @@
 3) Why would you do this
 4) Why for free? Where is the catch?
 5) Details
-6) There's something to improve?
+6) How can I install this?
+7) There's something to improve?
 
 # 1) What is it?
 It is an extension for Chrome browser. It is designed to be maximally simple.
