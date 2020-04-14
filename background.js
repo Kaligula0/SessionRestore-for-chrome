@@ -14,9 +14,6 @@
 
 
 /*
-	//remove/clear alarm
-	chrome.alarms.clear('myAlarm');
-
 	chrome.tabs.getSelected(null,function(tab){})
 	var g=tab.url.indexOf('facebook.com');
 	
@@ -34,7 +31,7 @@
 function start(){
 
 	// read user settings
-	//window.$Interval = (+localStorage['TimerDelay']||300000); // 5 mins
+//window.$Interval = (+localStorage['TimerDelay']||300000); // 5 mins
 	var $Interval = 300000; // 5 mins
 
 	// read or set 'saveAlarm'
@@ -140,8 +137,13 @@ function save(){
 					chrome.storage.local.set(
 						{
 							sessions: JSON.stringify($sessions)
+//CHECK THE SIZE OF DATA
 						}
-					)
+					);
+
+					chrome.browserAction.setBadgeText({ text: "\u221A" });
+					chrome.browserAction.setTitle({ title: "Last saved "+(new Date($date)).toLocaleString() });
+
 				}
 			);
 			
