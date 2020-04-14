@@ -69,11 +69,12 @@ function buildSessionList(){
 	
 	document.querySelector('#mainTable tbody td.mainList').innerHTML = $mainList
 	
+	showSessionDetails();
 }
 
-function showSessionDetails($id){
-	if (typeof $id == "undefined") $id = $sessions.length-1;
-	if ($id==-1) return; //no sessions
+function showSessionDetails($id=$sessions.length-1){
+	//last session by default
+	if ($id==-1) return; //if no sessions
 	
 	var $date = $sessions[$id].date;
 	$date = new Date($date);
@@ -102,7 +103,7 @@ function showSessionDetails($id){
 		
 		$el.tabs.forEach(function($tab, $j, $arr){
 			$sessionDetails = $sessionDetails
-				+ '<li><img class="favicon" src="'+$tab.favIconUrl+'"> '
+				+ '<li><img class="favicon" src="'+($tab.favIconUrl?$tab.favIconUrl:'/images/1x1.png')+'"> '
 				+ '<a href='+encodeURI($tab.url)+'" target="_blank">'
 				+ ($tab.title.length>100?$tab.title.substring(0,100)+'…':$tab.title)
 				+ '</a>'
