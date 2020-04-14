@@ -54,7 +54,7 @@ function buildSessionList(){
 			);
 
 			$mainList = ''
-				+ '<p class="date">'
+				+ '<p class="date session_'+$i+'">'
 				+ '<a href="#" class="session_'+$i+'">'
 				+ $date.toLocaleString() + '</a><br />'
 				+ '<small>'
@@ -67,14 +67,30 @@ function buildSessionList(){
 		}
 	);
 	
-	document.querySelector('#mainTable tbody td.mainList').innerHTML = $mainList
-	
+	document.querySelector('#mainTable tbody td.mainList').innerHTML = $mainList;
+
+	document.querySelectorAll('#mainTable td.mainList p.date a').forEach(
+		function($el, $i, $arr){
+			$el.addEventListener(
+				'click',
+				function () {
+					showSessionDetails(+this.className.match(/session_(\d+)/)[1]);
+				}
+			);
+		}
+	);
+
 	showSessionDetails();
 }
 
 function showSessionDetails($id=$sessions.length-1){
 	//last session by default
-	if ($id==-1) return; //if no sessions
+	if ($id<0) return; //if no sessions
+	
+	var $a = document.querySelector('#mainTable td.mainList p.date.active');
+	if ($a!=null)
+		$a.className = $a.className.replace(' active','');
+	document.querySelector('#mainTable td.mainList p.date.session_'+$id).className += ' active';
 	
 	var $date = $sessions[$id].date;
 	$date = new Date($date);
@@ -98,7 +114,8 @@ function showSessionDetails($id=$sessions.length-1){
 	
 	$windows.forEach(function($el, $i, $arr){
 		$sessionDetails = $sessionDetails
-			+ '<h2> » Window #' + ($i+1) + ($el.incognito?' (Incognito) – ':' – ') + $el.tabs.length + ' tabs</h2>'
+			+ '<h2 class="session_'+$id+'"> » Window #' + ($i+1) + ($el.incognito?' (Incognito) – ':' – ') + $el.tabs.length + ' tabs '
+			+ '<small>→ <a class="session_'+$id+' openall window_'+($i)+'" href="#" title="Open new window with all these tabs">[open all]</a></small></h2>'
 			+ '<ul>';
 		
 		$el.tabs.forEach(function($tab, $j, $arr){
@@ -108,7 +125,7 @@ function showSessionDetails($id=$sessions.length-1){
 				+ ($tab.title.length>100?$tab.title.substring(0,100)+'…':$tab.title)
 				+ '</a>'
 				+ '</li>';
-		})
+		});
 
 		$sessionDetails = $sessionDetails
 			+ '</ul>';
@@ -117,6 +134,61 @@ function showSessionDetails($id=$sessions.length-1){
 	
 	document.querySelector('#mainTable tbody td.details').innerHTML = $sessionDetails;	
 
+	document.querySelectorAll('#mainTable tbody td.details h2 a.openall').forEach(
+		function($el, $i, $arr){
+			$el.addEventListener(
+				'click',
+				function () {
+					var $s = +this.className.match(/session_(\d+)/)[1];
+					var $w = +this.className.match(/window_(\d+)/)[1];
+					openall( $sessions[$s].windows[$w] );
+				}
+			);
+		}
+	);
+
+}
+
+function openall($elem){
+/*
+focused: true
+height: 908
+incognito: false
+left: -4
+state: "maximized"
+	The minimized, maximized and, fullscreen states cannot be combined with left, top, width, or height.
+top: -4
+type: "normal"
+url:
+width: 1608
+*/
+	clog($elem);
+
+	//$elem.tabs[].url
+	$urls=[];
+	$elem.tabs.forEach(
+		function ($el, $i, $arr){
+			$urls.push($el.url);
+		}
+	);
+	
+	var $obj = {
+		incognito:	$elem.incognito,
+		state:		$elem.state,
+		type:		$elem.type,
+		url:		$urls
+	}
+
+	// The minimized, maximized and fullscreen states cannot be combined with left, top, width, or height.
+	if ($elem.state=="normal") {
+		$obj.focused = $elem.focused;
+		$obj.height = $elem.height;
+		$obj.left = $elem.left;
+		$obj.top = $elem.top;
+		$obj.width = $elem.width;
+	}
+clog($obj);
+	chrome.windows.create($obj);
 }
 
 /*

@@ -149,16 +149,6 @@ function save(){
 		}
 	);
 }
-/*
-
-localStorage['sessions'] = [
-	{
-		date	: 1586624308968,
-		windows	: [{…}]
-	}
-]
-
-*/
 
 function clearStorage($key){
 	chrome.storage.local.set(
@@ -175,26 +165,15 @@ function clearStorageAll(){
  *  button onClick event
  */
 chrome.browserAction.onClicked.addListener(function($tab){
-	clog('Button clicked.');
-	var $uri='/sessions.html';
-	chrome.windows.getAll(
-		{populate:true},
-		function(windows){
-			clog('Opening in new tab (or active newtab).');
-			chrome.tabs.getSelected(
-				null,
-				function($tab){
-					if($tab.url=='chrome://newtab/'){
-						chrome.tabs.update($tab.id,{url:$uri});
-					}
-					else {
-						chrome.tabs.create({url:$uri,selected:true});
-					}
-				}
-			);
+	chrome.tabs.create(
+		{
+			url:		'/sessions.html',
+			selected:	true
 		}
 	);
 });
+
+//save RZADZIEJ ale też przy OTWARCIU NOWEJ ZAKŁADKI
 
 /*
  *  console.log() with time on line beginning
