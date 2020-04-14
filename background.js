@@ -42,6 +42,30 @@ function start(){
 				$result="300"; // [SEC]; DEFAULT 5 MINS
 			$result=(typeof $result=='object'?$result['interval']:$result);
 			window.$interval = JSON.parse($result);
+
+			// read or set 'saveAlarm'
+			chrome.alarms.get(
+				'saveAlarm',
+				function($a){
+					clog('I\'m trying to find out if \'saveAlarm\' is already set:');
+					if (typeof $a=='object') {
+						clog('→ true!');
+						chrome.alarms.create('saveAlarm', {periodInMinutes:$interval/60});
+					} else {
+						clog('→ false. I\'m going to set it now.');
+						// chrome.alarms.create('saveAlarm', {delayInMinutes:$interval/60,periodInMinutes:$interval/60});
+						chrome.alarms.create(
+							'saveAlarm',
+							{
+								when:Date.now()+5000,
+								periodInMinutes:$interval/60
+							}
+						);
+						clog('Alarm set.');
+					}
+				}
+			);
+
 		}
 	);
 	chrome.storage.local.get(
@@ -51,29 +75,6 @@ function start(){
 				$result="20"; // DEFAULT 20%
 			$result=(typeof $result=='object'?$result['quotaMax']:$result);
 			window.$quotaMax = JSON.parse($result);
-		}
-	);
-
-	// read or set 'saveAlarm'
-	chrome.alarms.get(
-		'saveAlarm',
-		function($a){
-			clog('I\'m trying to find out if \'saveAlarm\' is already set:');
-			if (typeof $a=='object') {
-				clog('→ true!');
-				chrome.alarms.create('saveAlarm', {periodInMinutes:$interval/60});
-			} else {
-				clog('→ false. I\'m going to set it now.');
-				// chrome.alarms.create('saveAlarm', {delayInMinutes:$interval/60,periodInMinutes:$interval/60});
-				chrome.alarms.create(
-					'saveAlarm',
-					{
-						when:Date.now()+5000,
-						periodInMinutes:$interval/60
-					}
-				);
-				clog('Alarm set.');
-			}
 		}
 	);
 
