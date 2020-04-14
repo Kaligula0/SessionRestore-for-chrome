@@ -1,0 +1,17 @@
+﻿.noshow {
+	display: none;
+}
+
+table, th, td {
+	border: solid 1px black;
+	vertical-align: top;
+}
+
+td.details li {
+	padding-bottom: 5px;
+}
+
+td.details li img.favicon {
+	width: 16px;
+	height: 16px;
+}
