@@ -22,5 +22,11 @@ I'm not a software developer. I'm a hobby coder. I made it for me and my wife. W
 • We have 5 MB to use for this purpose ;) As it saves every 5 minutes I decided to use 20% (you can change it), and for me this makes about 30 of last saved sessions with 25-30 tabs each.
 • If you want you can permit it in Incognito mode – it can also restore Incognito window as Incognito again.
 • You can remove specific sessions.
-# 6) There's something to improve?
-Let me know. Submit an issue.
+# 6) How can I install this?
+1. Open main repository → https://github.com/Vinne2/SessionRestore-for-chrome
+2. Download (click green button "Clone or dowload" and "Download ZIP").
+3. Unzip to any place you like (but a place that it won't get deleted!). Remember THAT folder.
+4. In Chrome go to chrome://extensions/ and check the "Developer mode" in the top right.
+6. Click "Load unpacked extension" button in the top left and select THAT folder.
+# 7) In case of problems with the extension…
+…let me know. Submit an issue.
