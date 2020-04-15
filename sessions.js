@@ -94,6 +94,22 @@
 			);
 		}
 	);
+	document.querySelector('#mainTable td.settings a.openExtensionsLink').addEventListener(
+		'click',
+		function () {
+			chrome.tabs.create(
+				{
+					url:		'chrome://extensions/',
+					selected:	true
+				}
+			);
+		}
+	);
+
+	// read current version from manifest.json
+	var $iframe = document.querySelector('#versionFrame');
+	document.querySelector('p.version span').innerText = $iframe.contentWindow.document.querySelector('html').innerText.match(/"version": "([^"]*?)",/)[1];
+	$iframe.remove();
 
 }
 

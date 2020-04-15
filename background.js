@@ -120,10 +120,17 @@ function clearAlarm($name){
 	chrome.alarms.clear($name);
 }
 
+$windowsOld={};
 function save(){
 	chrome.windows.getAll(
 		{populate:true},
 		function($windows){
+
+			window.$windows = $windows;
+			// check if anything changed; if nothing – postpone autosave (return;)
+			if (JSON.stringify($windowsOld)==JSON.stringify($windows))
+				return;
+
 			chrome.storage.local.get(
 				'sessions',
 				function($result){
@@ -153,6 +160,8 @@ function save(){
 							sessions: JSON.stringify($sessions)
 						}
 					);
+					
+					$windowsOld = $windows;
 
 					chrome.browserAction.setBadgeText({ text: "\u221A" });
 					chrome.browserAction.setTitle({ title: "Last saved "+(new Date($date)).toLocaleString() });
