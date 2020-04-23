@@ -2,8 +2,13 @@
 	display: none;
 }
 
-small {
-	font-size: small;
+small,
+.small {
+	font-size: .67em;
+}
+
+.small-caps {
+	font-variant: small-caps;
 }
 
 a {
