@@ -26,75 +26,114 @@
 	chrome.browserAction.setBadgeBackgroundColor({color:[208,0,24,255]}); // GMail red // it was green rgb(0,204,51) before
 */
 
+/*
+ * REQUIRED user settings
+ */
+window.$interval = 300; // [SEC]; DEFAULT: RUN EVERY 5 MINS
+window.$quotaMax = 20; // DEFAULT: USE 20% OF MAX STORAGE
+window.$quotaOverload = false; // DEFAULT: DON'T LET USER EXCEED 90% OF MAX STORAGE
+window.$sessions = []; // DEFAULT: EMPTY ARRAY
+window.$windowsOld = {};
+if (typeof $ThisIsSessionsPage=="undefined" || !$ThisIsSessionsPage)
+	window.$ThisIsSessionsPage = false;
 
 /*
- *  window.onload function
+ * INITIATE
+ * set alarm, read user settings
  */
-function start(){
-
-	// read REQUIRED user settings
-	// I mean, check if there are already sessions in storage, if not then create default
-	// if yes then read
-	chrome.storage.local.get(
-		'interval',
-		function($result){
-			if (Object.keys($result).length==0) //$result={} instead of {sessions: […]}
-				$result="300"; // [SEC]; DEFAULT 5 MINS
-			$result=(typeof $result=='object'?$result['interval']:$result);
-			window.$interval = JSON.parse($result);
-
-			// read or set 'saveAlarm'
-			chrome.alarms.get(
-				'saveAlarm',
-				function($a){
-					clog('I\'m trying to find out if \'saveAlarm\' is already set:');
-					if (typeof $a=='object') {
-						clog('→ true!');
-						chrome.alarms.create('saveAlarm', {periodInMinutes:$interval/60});
-					} else {
-						clog('→ false. I\'m going to set it now.');
-						// chrome.alarms.create('saveAlarm', {delayInMinutes:$interval/60,periodInMinutes:$interval/60});
-						chrome.alarms.create(
-							'saveAlarm',
-							{
-								when:Date.now()+5000,
-								periodInMinutes:$interval/60
-							}
-						);
-						clog('Alarm set.');
-					}
-				}
-			);
-
-		}
-	);
-	chrome.storage.local.get(
-		'quotaMax',
-		function($result){
-			if (Object.keys($result).length==0) //$result={} instead of {sessions: […]}
-				$result="20"; // DEFAULT 20%
-			$result=(typeof $result=='object'?$result['quotaMax']:$result);
-			window.$quotaMax = JSON.parse($result);
-		}
-	);
-
-	// add listener before save, because while I was debugging the script,
-	// the alarm usually went off during save() and before the listener was added
-	// so the save didn't run at all
+function init(){
 	chrome.alarms.onAlarm.addListener(save);
+	activateButton();
+	readSettings();
+}
 
-	// check if there are already sessions in storage, if not then create empty
+/*
+ *  button onClick event
+ */
+function activateButton(){
+	chrome.browserAction.onClicked.addListener(function($tab){
+		chrome.tabs.create(
+			{
+				url:		'/sessions.html',
+				selected:	true
+			}
+		);
+	});
+}
+
+/*
+ * read 1 or more user settings
+ * all at once (default) or 1 given setting
+ */
+function readSettings($settings) {
+	if (typeof $settings == "undefined") {
+		$settings = ['sessions','quotaMax','quotaOverload','interval'];
+	} else if (typeof $settings == "string") {
+		$settings = [$settings];
+	} // else I suppose it's already an Array
+	
+	log('I read user settings from storage…');
+	$settings.forEach(readSetting);
+}
+/*
+ * read 1 user setting (exist ? read : set)
+ * arguments: Array of settings' names
+ */
+function readSetting($setting){
 	chrome.storage.local.get(
-		'sessions',
+		$setting,
 		function($result){
-			clog($result);
-			if (Object.keys($result).length==0) //$result={} instead of {sessions: […]}
+			if ($result[$setting]!=undefined){ // b'coz empty $result={} instead of {$setting: value}
+				if ($setting == 'sessions')
+					return; // no need to read sessions on init, save() reads every time
+
+				window['$'+$setting] = JSON.parse($result[$setting]);
+			} else {
 				chrome.storage.local.set(
 					{
-						sessions: "[]"
+						[$setting]: window['$'+$setting]
+					}
+				);	
+			}
+
+			log('$'+$setting+'='+window['$'+$setting]);
+
+			if ($setting == 'interval'){
+				if (!$ThisIsSessionsPage)
+					setAlarm();
+			}
+
+			if ($ThisIsSessionsPage) {
+				var attr = ($setting == 'quotaOverload' ? 'checked' : 'value' );
+				document.querySelector('input[name="'+$setting+'"]')[attr] = window['$'+$setting];
+			}
+		}
+	);
+}
+
+/*
+ * read or set a 'saveAlarm' alarm
+ */
+function setAlarm(){
+
+	chrome.alarms.get(
+		'saveAlarm',
+		function($a){
+			log('I\'m trying to find out if \'saveAlarm\' is already set:');
+			if (typeof $a=='object') {
+				log('→ true!');
+				//chrome.alarms.create('saveAlarm', {periodInMinutes:$interval/60});
+			} else {
+				log('→ false. I\'m going to set it now.');
+				chrome.alarms.create(
+					'saveAlarm',
+					{
+						when:Date.now()+5000, // +5s
+						periodInMinutes:$interval/60
 					}
 				);
-			clog($result);
+				log('Alarm set.');
+			}
 		}
 	);
 
@@ -107,11 +146,11 @@ function getAlarms(){
 	chrome.alarms.getAll(
 		function($a){
 			var $l=$a.length;
-			clog($l+' alarm'+($l>1?'s':'')+':');
+			log($l+' alarm'+($l>1?'s':'')+':');
 			for (var i=1;i<=$l;i++){
-				clog('→ time of '+i+(i==1?'st':(i==2?'nd':(i==3?'rd':(i>3?'th':''))))+': '+new Date($a[0].scheduledTime));
+				log('→ time of '+i+(i==1?'st':(i==2?'nd':(i==3?'rd':(i>3?'th':''))))+': '+new Date($a[0].scheduledTime));
 			}
-			clog($a);
+			log($a);
 		}
 	);
 }
@@ -120,16 +159,19 @@ function clearAlarm($name){
 	chrome.alarms.clear($name);
 }
 
-$windowsOld={};
-function save(){
+function save($forceSave = false, $callbackFn = null){
 	chrome.windows.getAll(
 		{populate:true},
 		function($windows){
 
-			window.$windows = $windows;
-			// check if anything changed; if nothing – postpone autosave (return;)
-			if (JSON.stringify($windowsOld)==JSON.stringify($windows))
-				return;
+			if (!$forceSave) {
+				window.$windows = $windows;
+				// check if anything changed; if nothing – postpone autosave (return;)
+				if (JSON.stringify($windowsOld)==JSON.stringify($windows)) {
+					log('Alarm went off – but nothing changed since last save, so I\'m not saving anything.');
+					return;
+				}
+			}
 
 			chrome.storage.local.get(
 				'sessions',
@@ -151,10 +193,12 @@ function save(){
 					$sessions.push( $obj );
 
 					while (JSON.stringify($sessions).length + JSON.stringify($obj).length > $quotaMax/100 * chrome.storage.local.QUOTA_BYTES) {
+//						log(JSON.stringify($sessions).length +'+'+ JSON.stringify($obj).length +'>'+ $quotaMax/100 * chrome.storage.local.QUOTA_BYTES);
 						$sessions.shift();
 					}
 					//OR: if ($sessions.length>=30) $sessions.shift();
 
+					// czy ta fx cos returnuje?
 					chrome.storage.local.set(
 						{
 							sessions: JSON.stringify($sessions)
@@ -165,6 +209,11 @@ function save(){
 
 					chrome.browserAction.setBadgeText({ text: "\u221A" });
 					chrome.browserAction.setTitle({ title: "Last saved "+(new Date($date)).toLocaleString() });
+					
+					if (typeof $callbackFn == "function")
+						$callbackFn.call(null);
+
+					//return? concsole log
 
 				}
 			);
@@ -172,41 +221,51 @@ function save(){
 	);
 }
 
-function clearStorage($key){
-	chrome.storage.local.set(
-		{
-			[$key]: "[]"
-		}
-	);
+function clearStorage($key, $callbackFn = null){
+	if ($key==undefined) {
+		throw new Error("clearStorage() called without $key specified.");
+	} else {
+		chrome.storage.local.set(
+			{
+				[$key]: "[]"
+			}
+		);
+		if (typeof $callbackFn == "function")
+			$callbackFn.call(null);
+
+	}
 }
 function clearStorageAll(){
 	chrome.storage.local.clear();
 }
 
 /*
- *  button onClick event
+ * console.log() with time on line beginning
+ * calls by default: console.info('time-ms: …');
+ * arguments: ?type, arguments…
+ *  - type = error|info|log|warn (default = info) (optional)
+ *  - arguments = other arguments (what to log in console)
  */
-chrome.browserAction.onClicked.addListener(function($tab){
-	chrome.tabs.create(
-		{
-			url:		'/sessions.html',
-			selected:	true
-		}
-	);
-});
+function log(){
+	var $type,
+		$arguments = Array.from(arguments); // arguments in an array-like Object, but not Array
 
-/*
- *  console.log() with time on line beginning
- */
-function clog($txt,$type){
-	$type=($type||'info');
-	var $date=new Date();
+	if ($arguments.length>1 && 'error,info,log,warn'.indexOf($arguments[0])>-1) {
+		$type = $arguments[0];
+		$arguments.shift(); // remove 1st argument
+	} else {
+		$type = 'info';
+	}
+
+	var $date = new Date();
 	var $ms = $date.getMilliseconds();
 	$ms = $ms<100 ? ($ms<10?($ms==0?'000':'00'+$ms):'0'+$ms) : $ms ;
-	return console[$type]( //default: console.info('…');
-		'['+$date.toLocaleTimeString()+'.'+$ms+']',
-		$txt
-	);
+
+	$arguments.unshift('['+$date.toLocaleTimeString()+'.'+$ms+']'); // add to Array as 1st
+
+	return console[$type].apply(null, $arguments);
 }
 
-window.onload=start;
+// init() only when this script isn't included to sessions.html
+if (!$ThisIsSessionsPage)
+	window.onload=init;

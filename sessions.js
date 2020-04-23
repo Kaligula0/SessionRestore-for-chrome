@@ -1,51 +1,15 @@
 ﻿function start() {
-	// check if there are already sessions in storage, if not then create empty
-	chrome.storage.local.get(
-		'sessions',
-		function($result){
-			if (Object.keys($result).length==0) //$result={} instead of {sessions: […]}
-				chrome.storage.local.set(
-					{
-						sessions: "[]"
-					}
-				);
-		}
-	);
 
-	// check if there are already sessions in storage, if not then create default
-	// if yes then read
-	chrome.storage.local.get(
-		'interval',
-		function($result){
-			if (Object.keys($result).length==0) //$result={} instead of {sessions: […]}
-				$result="300"; // [SEC]; DEFAULT 5 MINS
-			$result=(typeof $result=='object'?$result['interval']:$result);
-			window.$interval = JSON.parse($result);
-			document.querySelector('#mainTable td.settings input[name="interval"]').value = JSON.parse($result);
-		}
-	);
-	chrome.storage.local.get(
-		'quotaOverload',
-		function($result){
-			if (Object.keys($result).length==0) //$result={} instead of {sessions: […]}
-				$result="false"; // DEFAULT NOT TO EXCEED 90%
-			$result=(typeof $result=='object'?$result['quotaOverload']:$result);
-			window.$quotaOverload = JSON.parse($result);
-			document.querySelector('#mainTable td.settings input[name="quotaOverload"]').checked = JSON.parse($result);
-		}
-	);
-	chrome.storage.local.get(
-		'quotaMax',
-		function($result){
-			if (Object.keys($result).length==0) //$result={} instead of {sessions: […]}
-				$result="20"; // DEFAULT 20%
-			$result=(typeof $result=='object'?$result['quotaMax']:$result);
-			window.$quotaMax = JSON.parse($result);
-			document.querySelector('#mainTable td.settings input[name="quotaMax"]').value = JSON.parse($result);
-		}
-	);
-
+	readSettings();
 	readStorage();
+
+	document.querySelectorAll('div.sessionsMenu ul.sessionsMenu > a').forEach(
+		function($el, $i, $Arr){
+			$el.addEventListener('click',toggleSessionsMenu);
+		}
+	);
+	document.querySelector('div.sessionsMenu ul.sessionsMenu > li.saveCurrentSession').addEventListener('click',save.bind(null, true, readStorage));
+	document.querySelector('div.sessionsMenu ul.sessionsMenu > li.clearAllSessions').addEventListener('click',clearStorage.bind(null, 'sessions', readStorage));
 
 	document.querySelectorAll('#mainTable td.settings input').forEach(
 		function($el, $i, $arr){
@@ -107,89 +71,109 @@
 	);
 
 	// read current version from manifest.json
+	// MAKE IT AN OPTION?
 	var $iframe = document.querySelector('#versionFrame');
 	document.querySelector('p.version span').innerText = $iframe.contentWindow.document.querySelector('html').innerText.match(/"version": "([^"]*?)",/)[1];
 	$iframe.remove();
 
 }
 
-var $sessions;
-
-function readStorage(){
+function readStorage($buildSessionList = true, $showLatestSessionDetails = true){
 	chrome.storage.local.get(
 		'sessions',
 		function($result){
-			$result=(typeof $result=='object'?$result['sessions']:$result);
-			$sessions=JSON.parse($result);
-			
-			buildSessionList();
+			$sessions=JSON.parse($result['sessions']);
+			log('sessions',$sessions);
+			if ($buildSessionList)
+				buildSessionList($showLatestSessionDetails);
 		}
 	);
 }
 
-function buildSessionList(){
+function buildSessionList($showLatestSessionDetails = true){
 	
 	/* THEAD */
 	// number of sessions
 	document.querySelector('#mainTable th.mainList .number').innerHTML = $sessions.length;
-	
-	var $mainList = '';
-	
-	$sessions.forEach(
-		function($el, $i, $arr){
-			
-			var $date = $el.date;
-			$date = new Date($date);
-			
-			var $windows = $el.windows;
-			var $windows_l = $el.windows.length;
-			var $tabsSum = '';
-			$windows.forEach(
-				function($w, $j){
-					$tabsSum = $tabsSum + ($j==0?'':'+') + $w.tabs.length;
-				}
-			);
 
-			$mainList = ''
-				+ '<p class="date session_'+$i+'">'
-				+ '<a class="sessionLink session_'+$i+'">'
-				+ $date.toLocaleString() + '</a><br />'
-				+ '<small>'
-				+ $windows_l + ' window' + ($windows_l==1?'':'s')
-				+ ', ' + $tabsSum + ' tab' + ($tabsSum==1?'':'s')
-				+ '</small>'
-				+ '<small><a class="removeLink session_'+$i+'" title="Remove session">[X]</small>'
-				+ '</p>'
-				+ $mainList;
+	if ($sessions.length == 0) {
+		clearSessionsList();
+		clearSessionDetails();
+	} else {
 
+		/* TBODY */
+		var $mainList = ''
+
+		$sessions.forEach(
+			function($el, $i, $arr){
+				
+				var $date = $el.date;
+				$date = new Date($date);
+				
+				var $windows = $el.windows;
+				var $windows_l = $el.windows.length;
+				var $tabsSum = '';
+				$windows.forEach(
+					function($w, $j){
+						$tabsSum = $tabsSum + ($j==0?'':'+') + $w.tabs.length;
+					}
+				);
+
+				$mainList = ''
+					+ '<p class="date session_'+$i+'">'
+					+ '<a class="sessionLink session_'+$i+'">'
+					+ $date.toLocaleString() + '</a><br />'
+					+ '<small>'
+					+ $windows_l + ' window' + ($windows_l==1?'':'s')
+					+ ', ' + $tabsSum + ' tab' + ($tabsSum==1?'':'s')
+					+ '</small>'
+					+ '<small><a class="removeLink session_'+$i+'" title="Remove session">[X]</small>'
+					+ '</p>'
+					+ $mainList;
+
+			}
+		);
+		
+		document.querySelector('#mainTable tbody td.mainList div.mainListContainer').innerHTML = $mainList;
+
+		document.querySelectorAll('#mainTable td.mainList p.date a.sessionLink').forEach(
+			function($el, $i, $arr){
+				$el.addEventListener(
+					'click',
+					function () {
+						showSessionDetails(+this.className.match(/session_(\d+)/)[1]);
+					}
+				);
+			}
+		);
+
+		document.querySelectorAll('#mainTable td.mainList p.date a.removeLink').forEach(
+			function($el, $i, $arr){
+				$el.addEventListener(
+					'click',
+					function () {
+						removeSession(+this.className.match(/session_(\d+)/)[1]);
+					}
+				);
+			}
+		);
+
+		if ($showLatestSessionDetails)
+			showSessionDetails();
+
+	}
+}
+
+function toggleSessionsMenu(){
+	document.querySelectorAll('div.sessionsMenu a span, div.sessionsMenu ul li').forEach(
+		function($el, $i, $Arr){
+			if (!$el.className || $el.className.indexOf('noshow') == -1) {
+				$el.className = $el.className + ' noshow';
+			} else {
+				$el.className = $el.className.replace(/( noshow|noshow |noshow)/,'');
+			}
 		}
 	);
-	
-	document.querySelector('#mainTable tbody td.mainList').innerHTML = $mainList;
-
-	document.querySelectorAll('#mainTable td.mainList p.date a.sessionLink').forEach(
-		function($el, $i, $arr){
-			$el.addEventListener(
-				'click',
-				function () {
-					showSessionDetails(+this.className.match(/session_(\d+)/)[1]);
-				}
-			);
-		}
-	);
-
-	document.querySelectorAll('#mainTable td.mainList p.date a.removeLink').forEach(
-		function($el, $i, $arr){
-			$el.addEventListener(
-				'click',
-				function () {
-					removeSession(+this.className.match(/session_(\d+)/)[1]);
-				}
-			);
-		}
-	);
-
-	showSessionDetails();
 }
 
 function showSessionDetails($id=$sessions.length-1){
@@ -258,6 +242,13 @@ function showSessionDetails($id=$sessions.length-1){
 
 }
 
+function clearSessionsList(){
+	document.querySelector('#mainTable tbody td.mainList div.mainListContainer').innerHTML = '';	
+}
+function clearSessionDetails(){
+	document.querySelector('#mainTable tbody td.details').innerHTML = '';	
+}
+
 function openall($elem){
 /*
 focused: true
@@ -271,7 +262,7 @@ type: "normal"
 url:
 width: 1608
 */
-	clog($elem);
+	log($elem);
 
 	//$elem.tabs[].url
 	$urls=[];
@@ -296,12 +287,12 @@ width: 1608
 		$obj.top = $elem.top;
 		$obj.width = $elem.width;
 	}
-clog($obj);
+log($obj);
 	chrome.windows.create($obj);
 }
 
 function removeSession($id) {
-	clog($id);
+	log($id);
 	$sessions.splice($id, 1);
 	chrome.storage.local.set(
 		{
@@ -309,20 +300,6 @@ function removeSession($id) {
 		}
 	);
 	document.querySelector('#mainTable td.mainList p.session_'+$id).remove();
-}
-
-/*
- *  console.log() with time on line beginning
- */
-function clog($txt,$type){
-	$type=($type||'info');
-	var $date=new Date();
-	var $ms = $date.getMilliseconds();
-	$ms = $ms<100 ? ($ms<10?($ms==0?'000':'00'+$ms):'0'+$ms) : $ms ;
-	return console[$type]( //default: console.info('…');
-		'['+$date.toLocaleTimeString()+'.'+$ms+']',
-		$txt
-	);
 }
 
 window.onload=start;

@@ -17,12 +17,15 @@ a {
 	color: #0000ee;
 }
 
-table, th, td {
+table,
+th,
+td {
 	border: solid 1px black;
 	vertical-align: top;
 }
 
-table .mainList, .settings {
+table .mainList,
+table .settings {
 	width: 200px;
 }
 
