@@ -1,4 +1,8 @@
-﻿.noshow {
+﻿body {
+	background-color: oldlace;
+}
+
+.noshow {
 	display: none;
 }
 
@@ -17,8 +21,14 @@ a {
 	color: #0000ee;
 }
 
-table,
-th,
+table {
+	border: solid 1px black;
+	vertical-align: top;
+	background-color: papayawhip;
+}
+th {
+	vertical-align: top;
+}
 td {
 	border: solid 1px black;
 	vertical-align: top;
@@ -29,12 +39,20 @@ table .settings {
 	width: 200px;
 }
 
+td.mainList div.sessionsMenu {
+	background-color: peachpuff;
+	padding-top: 0.5em;
+	padding-bottom: 0.5em;
+}
+
 td.mainList p.active {
 	font-weight: bold;
 }
 
 td.mainList p.date {
 	position: relative;
+	margin-left: 0.5em;
+	margin-right: 0.5em;
 }
 td.mainList p.date a.removeLink {
 	position: absolute;
@@ -42,8 +60,23 @@ td.mainList p.date a.removeLink {
 	right: 0;
 	display: none;
 }
+td.mainList p.date:hover {
+	background-color: peachpuff;
+}
 td.mainList p.date:hover a.removeLink {
 	display: block;
+}
+
+td.mainList p.date small.removeOlderThan {
+	color: red;
+	cursor: pointer;
+}
+
+td.details > div.session.window:hover {
+	background-color: bisque;
+}
+td.details > div.session.window > ul > li:hover {
+	background-color: peachpuff;
 }
 
 td.details li {

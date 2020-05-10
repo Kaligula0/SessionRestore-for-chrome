@@ -8,7 +8,13 @@
 			$el.addEventListener('click',toggleSessionsMenu);
 		}
 	);
-	document.querySelector('div.sessionsMenu ul.sessionsMenu > li.saveCurrentSession').addEventListener('click',save.bind(null, true, readStorage));
+	/* alternative method of calling a function '$callbackFn'
+	 * that binds arguments but doesn't call the fn now
+	 *     $callbackFn.call(thisObject, arg1, arg2, …)
+	 * where 'thisObject' is what a 'this' will refer to
+	 */
+	document.querySelector('div.sessionsMenu ul.sessionsMenu > li.saveCurrentSession').addEventListener('click',save.bind(null, null, true, readStorage.bind(null, true, false)));
+	document.querySelector('div.sessionsMenu ul.sessionsMenu > li.clearOldSessions').addEventListener('click',removeSessionsOlderThan.bind(null, readStorage));
 	document.querySelector('div.sessionsMenu ul.sessionsMenu > li.clearAllSessions').addEventListener('click',clearStorage.bind(null, 'sessions', readStorage));
 
 	document.querySelectorAll('#mainTable td.settings input').forEach(
@@ -127,6 +133,7 @@ function buildSessionList($showLatestSessionDetails = true){
 					+ $windows_l + ' window' + ($windows_l==1?'':'s')
 					+ ', ' + $tabsSum + ' tab' + ($tabsSum==1?'':'s')
 					+ '</small>'
+					+ '<small class="removeOlderThan session_'+$i+' noshow"><br />[REMOVE OLDER THAN THIS]</small>'
 					+ '<small><a class="removeLink session_'+$i+'" title="Remove session">[X]</small>'
 					+ '</p>'
 					+ $mainList;
@@ -152,31 +159,39 @@ function buildSessionList($showLatestSessionDetails = true){
 				$el.addEventListener(
 					'click',
 					function () {
-						removeSession(+this.className.match(/session_(\d+)/)[1]);
+						removeNSessionsFromID(+this.className.match(/session_(\d+)/)[1]);
 					}
 				);
 			}
 		);
 
-		if ($showLatestSessionDetails)
+		/* if TRUE then update session detaild in central table cell
+		 * if FALSE select active session on the list after list rebuild
+		 * DO NOT USE FALSE AFTER REMOVING SESSION(S) because IDs of sessions change
+		 */
+		if ($showLatestSessionDetails) {
 			showSessionDetails();
+		} else {
+			var $id = document.querySelector('#mainTable tbody td.details').className.match(/session_\d+/)[0];
+			document.querySelector('#mainTable tbody td.mainList div.mainListContainer p.'+$id).classList.add('active');
+		}
 
 	}
 }
 
-function toggleSessionsMenu(){
-	document.querySelectorAll('div.sessionsMenu a span, div.sessionsMenu ul li').forEach(
-		function($el, $i, $Arr){
-			if (!$el.className || $el.className.indexOf('noshow') == -1) {
-				$el.className = $el.className + ' noshow';
-			} else {
-				$el.className = $el.className.replace(/( noshow|noshow |noshow)/,'');
-			}
-		}
-	);
+function toggle($el, $i, $Arr){
+	if (!$el.className || $el.className.indexOf('noshow') == -1) {
+		$el.className = $el.className + ' noshow';
+	} else {
+		$el.className = $el.className.replace(/( noshow|noshow |noshow)/,'');
+	}
 }
 
-function showSessionDetails($id=$sessions.length-1){
+function toggleSessionsMenu(){
+	document.querySelectorAll('div.sessionsMenu a span, div.sessionsMenu ul li').forEach(toggle);
+}
+
+function showSessionDetails($id = $sessions.length-1){
 	//last session by default
 	if ($id<0) return; //if no sessions
 	
@@ -199,7 +214,7 @@ function showSessionDetails($id=$sessions.length-1){
 	
 	var $sessionDetails = '';
 	$sessionDetails = $sessionDetails
-		+ '<h1>' + $date.toLocaleString()
+		+ '<h1 class="session_'+$id+'">' + $date.toLocaleString()
 		+ '<small> → '
 		+ $windows_l + ' window' + ($windows_l==1?'':'s')
 		+ ', ' + $tabsSum + ' tab' + ($tabsSum==1?'':'s')
@@ -207,25 +222,29 @@ function showSessionDetails($id=$sessions.length-1){
 	
 	$windows.forEach(function($el, $i, $arr){
 		$sessionDetails = $sessionDetails
-			+ '<h2 class="session_'+$id+'"> » Window #' + ($i+1) + ($el.incognito?' (Incognito) – ':' – ') + $el.tabs.length + ' tabs '
+			+ '<div class="session session_'+$id+' window window_'+($i+1)+'">'
+			+ '<h2 class="window"> » Window #' + ($i+1) + ($el.incognito?' (Incognito) – ':' – ') + $el.tabs.length + ' tabs '
 			+ '<small>→ <a class="session_'+$id+' openall window_'+($i)+'" title="Open new window with all these tabs">[open all]</a></small></h2>'
-			+ '<ul>';
+			+ '<ul class="tabs">';
 		
 		$el.tabs.forEach(function($tab, $j, $arr){
 			$sessionDetails = $sessionDetails
 				+ '<li><img class="favicon" src="'+($tab.favIconUrl?$tab.favIconUrl:'/images/1x1.png')+'"> '
-				+ '<a href='+encodeURI($tab.url)+'" target="_blank">'
+				+ '<a href="'+encodeURI($tab.url)+'" target="_blank">'
 				+ ($tab.title.length>100?$tab.title.substring(0,100)+'…':$tab.title)
 				+ '</a>'
 				+ '</li>';
 		});
 
 		$sessionDetails = $sessionDetails
-			+ '</ul>';
+			+ '</ul>'
+			+ '</div>';
 
 	})
 	
-	document.querySelector('#mainTable tbody td.details').innerHTML = $sessionDetails;	
+	var $container = document.querySelector('#mainTable tbody td.details');
+	$container.innerHTML = $sessionDetails;
+	$container.className = $container.className.replace(/( session_\d+|$)/,' session_'+$id);
 
 	document.querySelectorAll('#mainTable tbody td.details h2 a.openall').forEach(
 		function($el, $i, $arr){
@@ -291,15 +310,37 @@ log($obj);
 	chrome.windows.create($obj);
 }
 
-function removeSession($id) {
-	log($id);
-	$sessions.splice($id, 1);
+function removeNSessionsFromID($id, $amount = 1) {
+	log('Removed ',$amount,' session'+($amount>1?'s from ':' with ')+'ID=',$id,($amount>1?' onward.':'.'));
+	$sessions.splice($id, $amount);
 	chrome.storage.local.set(
 		{
 			sessions: JSON.stringify($sessions)
 		}
 	);
-	document.querySelector('#mainTable td.mainList p.session_'+$id).remove();
+	if ($amount == 1)
+		readStorage(true,false);
+}
+function removeSessionsOlderThan($callbackFn = null) {
+	alert('Click session which refers to "older than". (Do not click the [X].)');
+	document.querySelectorAll('td.mainList p.date small.removeOlderThan').forEach(
+		function($el, $i, $arr){
+			toggle($el);
+			$el.addEventListener(
+				'click',
+				function () {
+					$id = +this.className.match(/session_(\d+)/)[1];
+					removeNSessionsFromID(0,$id);
+					if (typeof $callbackFn == "function")
+						/* alternative method of calling a function '$callbackFn'
+						 *     $callbackFn.call(thisObject, arg1, arg2, …)
+						 * where 'thisObject' is what a 'this' will refer to
+						 */
+						$callbackFn.call(null);
+				}
+			);
+		}
+	);
 }
 
 window.onload=start;

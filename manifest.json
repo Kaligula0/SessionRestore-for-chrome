@@ -2,7 +2,7 @@
 	"manifest_version": 2,
 	"name": "Session Restore",
 	"short_name": "Session Restore",
-	"version": "2",
+	"version": "3",
 	"author": "Kaligula",
 
 	"description": "I will save your open tabs and let you restore them in case of a browser crash",

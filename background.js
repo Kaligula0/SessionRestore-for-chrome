@@ -103,7 +103,9 @@ function readSetting($setting){
 					setAlarm();
 			}
 
+			/* on '/sessions.html' read settings to the Settings column */
 			if ($ThisIsSessionsPage) {
+				/* 'quotaOverload' is checkbox, others are input/text */
 				var attr = ($setting == 'quotaOverload' ? 'checked' : 'value' );
 				document.querySelector('input[name="'+$setting+'"]')[attr] = window['$'+$setting];
 			}
@@ -114,19 +116,23 @@ function readSetting($setting){
 /*
  * read or set a 'saveAlarm' alarm
  */
-function setAlarm(){
+function setAlarm($name = 'saveAlarm'){
 
 	chrome.alarms.get(
-		'saveAlarm',
+		$name,
 		function($a){
 			log('I\'m trying to find out if \'saveAlarm\' is already set:');
-			if (typeof $a=='object') {
+			if (typeof $a=='object' && $a.periodInMinutes*60==$interval) {
 				log('→ true!');
-				//chrome.alarms.create('saveAlarm', {periodInMinutes:$interval/60});
+				//chrome.alarms.create($name, {periodInMinutes:$interval/60});
 			} else {
-				log('→ false. I\'m going to set it now.');
+				if (typeof $a=='object' && $a.periodInMinutes*60!=$interval) {
+					log('warn','→ true, but needs updating interval: ', $a.periodInMinutes*60, ' vs. ', $interval, ' sec!');
+				} else {
+					log('→ false. I\'m going to set it now.');
+				}
 				chrome.alarms.create(
-					'saveAlarm',
+					$name,
 					{
 						when:Date.now()+5000, // +5s
 						periodInMinutes:$interval/60
@@ -159,18 +165,32 @@ function clearAlarm($name){
 	chrome.alarms.clear($name);
 }
 
-function save($forceSave = false, $callbackFn = null){
+/**
+  * save current session (if anything changed since last save)
+  * arguments:
+  *  $alarm - was not essential, but alarm fires and calls 'save' and passes itself as 1st argument
+  *  $forceSave - force saving even if nothing changed (used on '/sessions.html')
+  *  $callbackFn - function to call after save finishes (used on '/sessions.html')
+  */
+function save($alarm, $forceSave = false, $callbackFn = null){
+	if (typeof $alarm=="object" && $alarm!==null) {
+		log('Alarm "'+$alarm.name+'" went off…');
+	} else {
+		log('Function "save" called by user…');
+	}
 	chrome.windows.getAll(
 		{populate:true},
 		function($windows){
 
 			if (!$forceSave) {
 				window.$windows = $windows;
+				log('Checking if anything changed since last save…');
 				// check if anything changed; if nothing – postpone autosave (return;)
-				if (JSON.stringify($windowsOld)==JSON.stringify($windows)) {
-					log('Alarm went off – but nothing changed since last save, so I\'m not saving anything.');
+				if (JSON.stringify(window.$windowsOld)==JSON.stringify($windows)) {
+					log('Nothing changed, so I\'m not saving anything.');
 					return;
 				}
+				log('Changed. Saving session.')
 			}
 
 			chrome.storage.local.get(
@@ -192,28 +212,32 @@ function save($forceSave = false, $callbackFn = null){
 					}
 					$sessions.push( $obj );
 
-					while (JSON.stringify($sessions).length + JSON.stringify($obj).length > $quotaMax/100 * chrome.storage.local.QUOTA_BYTES) {
-//						log(JSON.stringify($sessions).length +'+'+ JSON.stringify($obj).length +'>'+ $quotaMax/100 * chrome.storage.local.QUOTA_BYTES);
+//					log('JSON.stringify($sessions).length = ', JSON.stringify($sessions).length, ', JSON.stringify($obj).length = ', JSON.stringify($obj).length, ', JSON.stringify($sessions).length + JSON.stringify($obj).length = ', JSON.stringify($sessions).length + JSON.stringify($obj).length, 'vs.', '$quotaMax/100 * chrome.storage.local.QUOTA_BYTES', $quotaMax/100 * chrome.storage.local.QUOTA_BYTES);
+					while (JSON.stringify($sessions).length + JSON.stringify($obj).length +1 > $quotaMax/100 * chrome.storage.local.QUOTA_BYTES) {
 						$sessions.shift();
 					}
 					//OR: if ($sessions.length>=30) $sessions.shift();
 
-					// czy ta fx cos returnuje?
+					//does this fn return anything?
 					chrome.storage.local.set(
 						{
 							sessions: JSON.stringify($sessions)
 						}
 					);
 					
-					$windowsOld = $windows;
+					window.$windowsOld = $windows;
 
 					chrome.browserAction.setBadgeText({ text: "\u221A" });
-					chrome.browserAction.setTitle({ title: "Last saved "+(new Date($date)).toLocaleString() });
+					chrome.browserAction.setTitle({ title: "Last saved:\n"+(new Date($date)).toLocaleString() });
 					
 					if (typeof $callbackFn == "function")
+						/* alternative method of calling a function '$callbackFn'
+						 *     $callbackFn.call(thisObject, arg1, arg2, …)
+						 * where 'thisObject' is what a 'this' will refer to
+						 */
 						$callbackFn.call(null);
 
-					//return? concsole log
+					//return? console log
 
 				}
 			);
@@ -231,6 +255,10 @@ function clearStorage($key, $callbackFn = null){
 			}
 		);
 		if (typeof $callbackFn == "function")
+			/* alternative method of calling a function '$callbackFn'
+			 *     $callbackFn.call(thisObject, arg1, arg2, …)
+			 * where 'thisObject' is what a 'this' will refer to
+			 */
 			$callbackFn.call(null);
 
 	}
