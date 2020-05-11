@@ -1,5 +1,6 @@
 ﻿body {
-	background-color: oldlace;
+	/*background-color: oldlace;*/
+	background-color: papayawhip;
 }
 
 .noshow {
@@ -22,7 +23,7 @@ a {
 }
 
 table {
-	border: solid 1px black;
+	qborder: solid 1px black;
 	vertical-align: top;
 	background-color: papayawhip;
 }
@@ -34,10 +35,14 @@ td {
 	vertical-align: top;
 }
 
-table .mainList,
-table .settings {
+table tr > .mainList {
 	width: 200px;
 }
+
+/*
+ * SESSIONS LIST
+ * (1ST COLUMN)
+ **/
 
 td.mainList div.sessionsMenu {
 	background-color: peachpuff;
@@ -72,6 +77,25 @@ td.mainList p.date small.removeOlderThan {
 	cursor: pointer;
 }
 
+/*
+ * SESSION DETAILS
+ * (2ND COLUMN)
+ **/
+
+td.details {
+	padding: 5px;
+}
+
+td.details > div.session.window {
+	margin: 5px 0 5px;
+	padding-right: 5px;
+	border-radius: 5px;
+}
+
+td.details > div.session.window > ul > li {
+	border-radius: 5px;
+}
+
 td.details > div.session.window:hover {
 	background-color: bisque;
 }
@@ -86,4 +110,46 @@ td.details li {
 td.details li img.favicon {
 	width: 16px;
 	height: 16px;
+}
+
+/*
+ * SESSION DETAILS
+ * (2ND COLUMN)
+ **/
+/*
+table tr > td.settings:before {
+	content: "MOVE MOUSE HERE TO SEE SETTINGS";
+	display: block;
+	writing-mode: vertical-lr;
+	text-orientation: upright;
+}
+table tr > td.settings > * {
+	display: none;
+}
+table tr > td.settings:hover:before {
+	content: "";
+}
+table tr > td.settings:hover > * {
+	display: block;
+}
+*/
+table tr > td.settings {
+	padding: 5px;
+	max-width: 50px;
+	overflow-x: hidden;
+}
+table tr > .settings > * {
+	width: 190px;
+	overflow-x: hidden;
+}
+table tr > .settings:hover {
+	width: 200px;
+	overflow-x: auto;
+}
+
+table tr > td.settings {
+	opacity: 0.3;
+}
+table tr > td.settings:hover {
+	opacity: 1;
 }
