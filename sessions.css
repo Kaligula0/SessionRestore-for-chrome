@@ -23,7 +23,7 @@ a {
 }
 
 table {
-	qborder: solid 1px black;
+	/*border: solid 1px black;*/
 	vertical-align: top;
 	background-color: papayawhip;
 }
@@ -31,7 +31,7 @@ th {
 	vertical-align: top;
 }
 td {
-	border: solid 1px black;
+	/*border: solid 1px black;*/
 	vertical-align: top;
 }
 
@@ -84,6 +84,8 @@ td.mainList p.date small.removeOlderThan {
 
 td.details {
 	padding: 5px;
+	border: solid 1px black;
+	border-radius: 5px;
 }
 
 td.details > div.session.window {
@@ -112,11 +114,24 @@ td.details li img.favicon {
 	height: 16px;
 }
 
+@keyframes spin {
+    from {
+        transform: rotate(0deg)
+    }
+    to {
+        transform: rotate(360deg)
+    }
+}
+
+li:hover .favicon {
+    animation: spin 4s linear infinite;
+}
+
 /*
- * SESSION DETAILS
- * (2ND COLUMN)
+ * SETTINGS
+ * (3RD COLUMN)
  **/
-/*
+
 table tr > td.settings:before {
 	content: "MOVE MOUSE HERE TO SEE SETTINGS";
 	display: block;
@@ -132,7 +147,7 @@ table tr > td.settings:hover:before {
 table tr > td.settings:hover > * {
 	display: block;
 }
-*/
+
 table tr > td.settings {
 	padding: 5px;
 	max-width: 50px;

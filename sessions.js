@@ -1,4 +1,8 @@
-﻿function start() {
+﻿/*
+ * TODO
+ *  - …
+ **/
+function start() {
 
 	readSettings();
 	readStorage();
@@ -17,53 +21,55 @@
 	document.querySelector('div.sessionsMenu ul.sessionsMenu > li.clearOldSessions').addEventListener('click',removeSessionsOlderThan.bind(null, readStorage));
 	document.querySelector('div.sessionsMenu ul.sessionsMenu > li.clearAllSessions').addEventListener('click',clearStorage.bind(null, 'sessions', readStorage));
 
-	document.querySelectorAll('#mainTable td.settings input').forEach(
-		function($el, $i, $arr){
-			$el.addEventListener(
-				'input',
-				function () {
-					if (this.name=="quotaOverload") {
-						$quotaOverload = this.checked;
-						chrome.storage.local.set({quotaOverload: this.checked});
-						alert("Saved!");
-					} else if (this.name=="quotaMax") {
-						this.value = +this.value.replace(/[^\d]+/g,'');
-						if (this.value>90) {
-							if (!$quotaOverload) {
-								this.value = 90;
-							} else {
-								if (this.value>100)
-									this.value = 100;
-							}
-						}
-						chrome.storage.local.set({quotaMax: this.value});
-					} else if (this.name=="interval") {
-						this.value = +this.value.replace(/[^\d]+/g,'');
-						if (this.value<1) {
-							this.value = 1;
-						}
-						chrome.storage.local.set({interval: this.value});
-					}
-				}
-			);
+	document.querySelector('#mainTable td.settings input[name="quotaOverload"]').addEventListener(
+		'input',
+		function () {
+			$quotaOverload = this.checked;
+			chrome.storage.local.set({quotaOverload: this.checked});
+			alert("Saved!");
 		}
 	);
-	document.querySelectorAll('#mainTable td.settings input').forEach(
-		function($el, $i, $arr){
-			$el.addEventListener(
-				'change',
-				function () {
-					if (this.name=="quotaMax") {
-						chrome.storage.local.set({quotaMax: this.value});
-						alert("Saved!");
-					} else if (this.name=="interval") {
-						chrome.storage.local.set({interval: this.value});
-						alert("Saved!");
-					}
-				}
-			);
+	document.querySelector('#mainTable td.settings input[name="quotaMax"]').addEventListener(
+		'input',
+		function () {
+			this.value = +this.value.replace(/[^\d]+/g,'');
 		}
 	);
+	document.querySelector('#mainTable td.settings input[name="interval"]').addEventListener(
+		'input',
+		function () {
+			this.value = +this.value.replace(/[^\d]+/g,'');
+		}
+	);
+	document.querySelector('#mainTable td.settings input[name="quotaMax"]').addEventListener(
+		'change',
+		function () {
+			if (this.value<1) {
+				this.value = 1;
+			}
+			if (this.value>90) {
+				if (!$quotaOverload) {
+					this.value = 90;
+				} else {
+					if (this.value>100)
+						this.value = 100;
+				}
+			}
+			chrome.storage.local.set({quotaMax: this.value});
+			alert("Saved!");
+		}
+	);
+	document.querySelector('#mainTable td.settings input[name="interval"]').addEventListener(
+		'change',
+		function () {
+			if (this.value<60) {
+				this.value = 60;
+			}
+			chrome.storage.local.set({interval: this.value});
+			alert("Saved!");
+		}
+	);
+
 	document.querySelector('#mainTable td.settings a.openExtensionsLink').addEventListener(
 		'click',
 		function () {
@@ -76,11 +82,7 @@
 		}
 	);
 
-	// read current version from manifest.json
-	// MAKE IT AN OPTION?
-	var $iframe = document.querySelector('#versionFrame');
-	document.querySelector('p.version span').innerText = $iframe.contentWindow.document.querySelector('html').innerText.match(/"version": "([^"]*?)",/)[1];
-	$iframe.remove();
+	document.querySelector('p.version span.version').innerText = chrome.runtime.getManifest().version;
 
 }
 
@@ -194,7 +196,7 @@ function toggleSessionsMenu(){
 function showSessionDetails($id = $sessions.length-1){
 	//last session by default
 	if ($id<0) return; //if no sessions
-	
+
 	var $a = document.querySelector('#mainTable td.mainList p.date.active');
 	if ($a!=null)
 		$a.className = $a.className.replace(' active','');
