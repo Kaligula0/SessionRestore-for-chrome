@@ -90,7 +90,7 @@ function readStorage($buildSessionList = true, $showLatestSessionDetails = true)
 	chrome.storage.local.get(
 		'sessions',
 		function($result){
-			$sessions=JSON.parse($result['sessions']);
+			if ($result['sessions']!='') $sessions=JSON.parse($result['sessions']);
 			log('sessions',$sessions);
 			if ($buildSessionList)
 				buildSessionList($showLatestSessionDetails);

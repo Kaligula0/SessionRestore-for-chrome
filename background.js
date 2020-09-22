@@ -29,7 +29,7 @@
 /*
  * REQUIRED user settings
  */
-window.$interval = 300; // [SEC]; DEFAULT: RUN EVERY 5 MINS
+window.$interval = 900; // [SEC]; DEFAULT: RUN EVERY 15 MINS
 window.$quotaMax = 20; // DEFAULT: USE 20% OF MAX STORAGE
 window.$quotaOverload = false; // DEFAULT: DON'T LET USER EXCEED 90% OF MAX STORAGE
 window.$sessions = []; // DEFAULT: EMPTY ARRAY
@@ -204,7 +204,7 @@ function save($alarm, $forceSave = false, $callbackFn = null){
 					$date=Number($date);
 					
 					$result=(typeof $result=='object'?$result['sessions']:$result);
-					$sessions=JSON.parse($result);
+					$sessions=($result!=''?JSON.parse($result):[]);
 
 					$obj = {
 						date : $date,
