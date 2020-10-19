@@ -1,15 +1,33 @@
 ﻿body {
 	/*background-color: oldlace;*/
 	background-color: papayawhip;
+	margin: 8px;
 }
 
 .noshow {
 	display: none;
 }
 
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+	border-radius: 4px;
+	margin: 20px;
+}
+::-webkit-scrollbar-thumb {
+	background-color: rgba(169,169,169,0.3);
+	outline: 1px solid rgba(112,128,144,0.3);
+}
+::-webkit-scrollbar-thumb:hover {
+	background-color: rgba(169,169,169,1);
+	outline: 1px solid rgba(112,128,144,1);
+}
+
 small,
 .small {
-	font-size: .67em;
+	font-size: 11px;
 }
 
 .small-caps {
@@ -35,26 +53,40 @@ td {
 	vertical-align: top;
 }
 
-table tr > .mainList {
-	width: 200px;
-}
-
 /*
  * SESSIONS LIST
  * (1ST COLUMN)
  **/
 
+table tr > .mainList {
+	width: 200px;
+	padding: 0;
+}
+
 /* MENU */
 td.mainList div.sessionsMenu {
 	background-color: peachpuff;
-	padding-top: 0.5em;
-	padding-bottom: 0.5em;
+	padding-top: 5px;
+	padding-bottom: 5px;
+}
+
+td.mainList div.sessionsMenu ul.sessionsMenu.sessionsMenu-hidden a span.show-sessionsMenu,
+td.mainList div.sessionsMenu ul.sessionsMenu:not(.sessionsMenu-hidden) a span.hide-sessionsMenu {
+	display: inline;
+}
+td.mainList div.sessionsMenu ul.sessionsMenu:not(.sessionsMenu-hidden) li {
+	display: list-item;
+}
+td.mainList div.sessionsMenu ul.sessionsMenu:not(.sessionsMenu-hidden) a span.show-sessionsMenu,
+td.mainList div.sessionsMenu ul.sessionsMenu.sessionsMenu-hidden li,
+td.mainList div.sessionsMenu ul.sessionsMenu.sessionsMenu-hidden a span.hide-sessionsMenu {
+	display: none;
 }
 
 /* LIST */
 td.mainList div.mainListOuterContainer {
-	max-height: 695px; /* for 1600x900 screens */
-	padding-bottom: 5px;
+	height: 702px;
+	/*padding-bottom: 5px;*/
 	overflow-y: auto;
 }
 
@@ -98,12 +130,11 @@ td.details {
 
 div.detailsContainer {
 	overflow-y: auto;
-	max-height: 737px; /* for 1600x900 screens */
+	height: 737px;
 }
 
 td.details div.session.window {
-	margin: 5px 0 5px;
-	padding-right: 5px;
+	margin: 5px 5px 5px 0;
 	border-radius: 5px;
 }
 
@@ -149,7 +180,8 @@ table tr > td.settings:before {
 	content: "MOVE MOUSE HERE TO SEE SETTINGS";
 	display: block;
 	writing-mode: vertical-lr;
-	text-orientation: upright;
+	/*text-orientation: upright;*/
+	vertical-align: middle;
 }
 table tr > td.settings > * {
 	display: none;
@@ -167,11 +199,11 @@ table tr > td.settings {
 	overflow-x: hidden;
 }
 table tr > .settings > * {
-	width: 190px;
+	width: 290px;
 	overflow-x: hidden;
 }
 table tr > .settings:hover {
-	width: 200px;
+	width: 300px;
 	overflow-x: auto;
 }
 
