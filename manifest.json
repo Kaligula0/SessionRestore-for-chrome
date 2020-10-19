@@ -2,7 +2,7 @@
 	"manifest_version": 2,
 	"name": "Session Restore",
 	"short_name": "Session Restore",
-	"version": "5.1",
+	"version": "5.2",
 	"author": "Kaligula",
 
 	"description": "I will regularly and silently save your open tabs and let you restore them i.e. in case of a browser crash",

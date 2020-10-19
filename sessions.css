@@ -44,10 +44,18 @@ table tr > .mainList {
  * (1ST COLUMN)
  **/
 
+/* MENU */
 td.mainList div.sessionsMenu {
 	background-color: peachpuff;
 	padding-top: 0.5em;
 	padding-bottom: 0.5em;
+}
+
+/* LIST */
+td.mainList div.mainListOuterContainer {
+	max-height: 695px; /* for 1600x900 screens */
+	padding-bottom: 5px;
+	overflow-y: auto;
 }
 
 td.mainList p.active {
@@ -88,20 +96,25 @@ td.details {
 	border-radius: 5px;
 }
 
-td.details > div.session.window {
+div.detailsContainer {
+	overflow-y: auto;
+	max-height: 737px; /* for 1600x900 screens */
+}
+
+td.details div.session.window {
 	margin: 5px 0 5px;
 	padding-right: 5px;
 	border-radius: 5px;
 }
 
-td.details > div.session.window > ul > li {
+td.details div.session.window > ul > li {
 	border-radius: 5px;
 }
 
-td.details > div.session.window:hover {
+td.details div.session.window:hover {
 	background-color: bisque;
 }
-td.details > div.session.window > ul > li:hover {
+td.details div.session.window > ul > li:hover {
 	background-color: peachpuff;
 }
 

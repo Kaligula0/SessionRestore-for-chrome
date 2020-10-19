@@ -244,11 +244,11 @@ function showSessionDetails($id = $sessions.length-1){
 
 	})
 	
-	var $container = document.querySelector('#mainTable tbody td.details');
+	var $container = document.querySelector('#mainTable tbody td.details div.detailsContainer');
 	$container.innerHTML = $sessionDetails;
 	$container.className = $container.className.replace(/( session_\d+|$)/,' session_'+$id);
 
-	document.querySelectorAll('#mainTable tbody td.details h2 a.openall').forEach(
+	document.querySelectorAll('#mainTable tbody td.details div.detailsContainer h2 a.openall').forEach(
 		function($el, $i, $arr){
 			$el.addEventListener(
 				'click',
